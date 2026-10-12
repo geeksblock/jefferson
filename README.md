@@ -26,13 +26,14 @@ jefferson filesystem.img -d outdir
 
 ### Development
 
-The package is maintained with Poetry. If you want to contribute, we recommend you follow these steps:
+The package is maintained with [uv](https://docs.astral.sh/uv/). If you want to contribute, we recommend you follow these steps:
 
 ```sh
 git clone https://github.com/onekey-sec/jefferson.git
 cd jefferson
-poetry install
-poetry run jefferson
+uv sync
+uv run jefferson
+uv run pre-commit install
 ```
 
-You can install Poetry by following this [guide](https://python-poetry.org/dos/#installation)
+Nix users get the environment from `nix develop` or direnv.
