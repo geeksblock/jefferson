@@ -124,7 +124,15 @@ NODETYPES = {}
 
 
 def set_endianness(endianness):
-    global Jffs2_device_node_new, Jffs2_device_node_old, Jffs2_unknown_node, Jffs2_raw_dirent, Jffs2_raw_inode, parse_device_node_new, parse_device_node_old, NODETYPES
+    global \
+        Jffs2_device_node_new, \
+        Jffs2_device_node_old, \
+        Jffs2_unknown_node, \
+        Jffs2_raw_dirent, \
+        Jffs2_raw_inode, \
+        parse_device_node_new, \
+        parse_device_node_old, \
+        NODETYPES
 
     parser = cstruct.cstruct(endian=endianness)
     parser.load(CSTRUCT_DEFINITIONS)
