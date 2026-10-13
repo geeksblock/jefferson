@@ -11,9 +11,7 @@ from pathlib import Path
 from dissect import cstruct
 from lzallright import LZOCompressor
 
-import jefferson.compression.jffs2_lzma as jffs2_lzma
-import jefferson.compression.jffs2_lzma_nosize as jffs2_lzma_nosize
-import jefferson.compression.rtime as rtime
+from jefferson.compression import jffs2_lzma, jffs2_lzma_nosize, rtime
 
 
 def pad(x):
@@ -208,7 +206,7 @@ def parse_inode(data):
             inode.data = node_data
     except Exception as e:
         print(
-            "Decompression error on inode {}: {}".format(inode.ino, e), file=sys.stderr
+            f"Decompression error on inode {inode.ino}: {e}", file=sys.stderr
         )
         inode.data = b"\x00" * inode.dsize
 
@@ -247,10 +245,7 @@ def scan_fs(content, endianness, *, verbose=False):
         )
         if find_result == -1 and find_result_old == -1:
             break
-        if find_result != -1:
-            pos = find_result
-        else:
-            pos = find_result_old
+        pos = find_result if find_result != -1 else find_result_old
 
         unknown_node = parse_unknown_node(content[pos : pos + Jffs2_unknown_node.size])
         if not unknown_node.hdr_crc_match:
@@ -265,43 +260,34 @@ def scan_fs(content, endianness, *, verbose=False):
         if unknown_node.magic in [
             JFFS2_MAGIC_BITMASK,
             JFFS2_OLD_MAGIC_BITMASK,
-        ]:
-            if unknown_node.nodetype in NODETYPES:
-                if unknown_node.nodetype == JFFS2_NODETYPE_DIRENT:
-                    dirent = parse_dirent(
-                        content[offset : offset + unknown_node.totlen], offset
-                    )
-                    if dirent.ino in fs[JFFS2_NODETYPE_DIRENT]:
-                        if (
-                            dirent.version
-                            > fs[JFFS2_NODETYPE_DIRENT][dirent.ino].version
-                        ):
-                            fs[JFFS2_NODETYPE_DIRENT][dirent.ino] = dirent
-                    else:
+        ] and unknown_node.nodetype in NODETYPES:
+            if unknown_node.nodetype == JFFS2_NODETYPE_DIRENT:
+                dirent = parse_dirent(
+                    content[offset : offset + unknown_node.totlen], offset
+                )
+                if dirent.ino in fs[JFFS2_NODETYPE_DIRENT]:
+                    if (
+                        dirent.version
+                        > fs[JFFS2_NODETYPE_DIRENT][dirent.ino].version
+                    ):
                         fs[JFFS2_NODETYPE_DIRENT][dirent.ino] = dirent
-                    if verbose:
-                        print("0x%08X:" % (offset), dirent)
-                elif unknown_node.nodetype == JFFS2_NODETYPE_INODE:
-                    inode = parse_inode(content[offset : offset + unknown_node.totlen])
-
-                    if inode.ino in fs[JFFS2_NODETYPE_INODE]:
-                        fs[JFFS2_NODETYPE_INODE][inode.ino].append(inode)
-                    else:
-                        fs[JFFS2_NODETYPE_INODE][inode.ino] = [inode]
-                    if verbose:
-                        print("0x%08X:" % (offset), inode)
-                elif unknown_node.nodetype == JFFS2_NODETYPE_CLEANMARKER:
-                    pass
-                elif unknown_node.nodetype == JFFS2_NODETYPE_PADDING:
-                    pass
-                elif unknown_node.nodetype == JFFS2_NODETYPE_SUMMARY:
-                    pass
-                elif unknown_node.nodetype == JFFS2_NODETYPE_XATTR:
-                    pass
-                elif unknown_node.nodetype == JFFS2_NODETYPE_XREF:
-                    pass
                 else:
-                    print("Unknown node type", unknown_node.nodetype, unknown_node)
+                    fs[JFFS2_NODETYPE_DIRENT][dirent.ino] = dirent
+                if verbose:
+                    print(f"0x{offset:08X}:", dirent)
+            elif unknown_node.nodetype == JFFS2_NODETYPE_INODE:
+                inode = parse_inode(content[offset : offset + unknown_node.totlen])
+
+                if inode.ino in fs[JFFS2_NODETYPE_INODE]:
+                    fs[JFFS2_NODETYPE_INODE][inode.ino].append(inode)
+                else:
+                    fs[JFFS2_NODETYPE_INODE][inode.ino] = [inode]
+                if verbose:
+                    print(f"0x{offset:08X}:", inode)
+            elif unknown_node.nodetype in (JFFS2_NODETYPE_CLEANMARKER, JFFS2_NODETYPE_PADDING) or unknown_node.nodetype in (JFFS2_NODETYPE_SUMMARY, JFFS2_NODETYPE_XATTR) or unknown_node.nodetype == JFFS2_NODETYPE_XREF:
+                pass
+            else:
+                print("Unknown node type", unknown_node.nodetype, unknown_node)
     return fs
 
 
@@ -384,10 +370,7 @@ def dump_fs(fs, target):
                         # use newest inode for mode
                         os.chmod(target_path, stat.S_IMODE(dirent.inodes[-1].mode))
                     break
-                elif stat.S_ISCHR(inode.mode):
-                    print("writing S_ISBLK", path)
-                    os.mknod(target_path, inode.mode, get_device(inode))
-                elif stat.S_ISBLK(inode.mode):
+                elif stat.S_ISCHR(inode.mode) or stat.S_ISBLK(inode.mode):
                     print("writing S_ISBLK", path)
                     os.mknod(target_path, inode.mode, get_device(inode))
                 elif stat.S_ISFIFO(inode.mode):
@@ -395,7 +378,7 @@ def dump_fs(fs, target):
                 elif stat.S_ISSOCK(inode.mode):
                     print("skipping S_ISSOCK", path)
                 else:
-                    print("unhandled inode.mode: %o" % inode.mode, inode, dirent)
+                    print(f"unhandled inode.mode: {inode.mode:o}", inode, dirent)
 
             except OSError as error:
                 print("OS error(%i): %s" % (error.errno, error.strerror), inode, dirent)
@@ -405,7 +388,7 @@ def extract_jffs2(file: Path, destination: Path, verbose: int) -> int:
     with contextlib.ExitStack() as context_stack:
         filesystem = context_stack.enter_context(file.open("rb"))
         filesystem_len = os.fstat(filesystem.fileno()).st_size
-        if 0 == filesystem_len:
+        if filesystem_len == 0:
             return -1
         content = context_stack.enter_context(
             mmap.mmap(filesystem.fileno(), filesystem_len, access=mmap.ACCESS_READ)
@@ -419,7 +402,7 @@ def extract_jffs2(file: Path, destination: Path, verbose: int) -> int:
         set_endianness(endianness)
 
         fs = scan_fs(content, endianness, verbose=verbose)
-        print("dumping fs to %s (endianness: %s)" % (destination, endianness))
+        print(f"dumping fs to {destination} (endianness: {endianness})")
         for key, value in fs.items():
             print("%s count: %i" % (NODETYPES[key].__name__, len(value)))
 
