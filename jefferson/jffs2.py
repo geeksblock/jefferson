@@ -9,7 +9,7 @@ import zlib
 from pathlib import Path
 
 from dissect import cstruct
-from lzallright import LZOCompressor as lzo
+from lzallright import LZOCompressor
 
 import jefferson.compression.jffs2_lzma as jffs2_lzma
 import jefferson.compression.jffs2_lzma_nosize as jffs2_lzma_nosize
@@ -199,7 +199,7 @@ def parse_inode(data):
         elif inode.compr == JFFS2_COMPR_LZMA:
             inode.data = jffs2_lzma.decompress(node_data, inode.dsize)
         elif inode.compr == JFFS2_COMPR_LZO:
-            inode.data = lzo.decompress(node_data)
+            inode.data = LZOCompressor.decompress(node_data)
         elif inode.compr == JFFS2_COMPR_LZMA_NO_SIZE:
             inode.data = jffs2_lzma_nosize.decompress(node_data, inode.dsize)
         else:
