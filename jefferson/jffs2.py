@@ -229,7 +229,7 @@ def parse_inode(data):
     return inode
 
 
-def scan_fs(content, endianness, verbose=False):
+def scan_fs(content, endianness, *, verbose=False):
     pos = 0
     jffs2_old_magic_bitmask_str = struct.pack(endianness + "H", JFFS2_OLD_MAGIC_BITMASK)
     jffs2_magic_bitmask_str = struct.pack(endianness + "H", JFFS2_MAGIC_BITMASK)
