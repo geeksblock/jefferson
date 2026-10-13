@@ -130,7 +130,7 @@ def set_endianness(endianness):
         Jffs2_raw_inode, \
         parse_device_node_new, \
         parse_device_node_old, \
-        NODETYPES
+        NODETYPES  # noqa: PLW0603 (global-statement)
 
     parser = cstruct.cstruct(endian=endianness)
     parser.load(CSTRUCT_DEFINITIONS)
@@ -181,7 +181,7 @@ def parse_dirent(data, node_offset):
     return dirent
 
 
-def parse_inode(data):
+def parse_inode(data):  # noqa: C901
     inode = Jffs2_raw_inode(data)
 
     node_data = data[Jffs2_raw_inode.size : Jffs2_raw_inode.size + inode.csize]
@@ -227,7 +227,7 @@ def parse_inode(data):
     return inode
 
 
-def scan_fs(content, endianness, *, verbose=False):
+def scan_fs(content, endianness, *, verbose=False):  # noqa: C901
     pos = 0
     jffs2_old_magic_bitmask_str = struct.pack(endianness + "H", JFFS2_OLD_MAGIC_BITMASK)
     jffs2_magic_bitmask_str = struct.pack(endianness + "H", JFFS2_MAGIC_BITMASK)
@@ -312,7 +312,7 @@ def sort_version(item):
     return item.version
 
 
-def dump_fs(fs, target):
+def dump_fs(fs, target):  # noqa: C901
     node_dict = {}
 
     for dirent in fs[JFFS2_NODETYPE_DIRENT].values():
