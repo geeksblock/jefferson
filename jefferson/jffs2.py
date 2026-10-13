@@ -122,15 +122,7 @@ NODETYPES = {}
 
 
 def set_endianness(endianness):
-    global \
-        Jffs2_device_node_new, \
-        Jffs2_device_node_old, \
-        Jffs2_unknown_node, \
-        Jffs2_raw_dirent, \
-        Jffs2_raw_inode, \
-        parse_device_node_new, \
-        parse_device_node_old, \
-        NODETYPES  # noqa: PLW0603 (global-statement)
+    global Jffs2_device_node_new, Jffs2_device_node_old, Jffs2_unknown_node, Jffs2_raw_dirent, Jffs2_raw_inode, parse_device_node_new, parse_device_node_old, NODETYPES  # noqa: PLW0603 (global-statement)
 
     parser = cstruct.cstruct(endian=endianness)
     parser.load(CSTRUCT_DEFINITIONS)
@@ -205,9 +197,7 @@ def parse_inode(data):  # noqa: C901
             print(node_data.hex()[:20])
             inode.data = node_data
     except Exception as e:
-        print(
-            f"Decompression error on inode {inode.ino}: {e}", file=sys.stderr
-        )
+        print(f"Decompression error on inode {inode.ino}: {e}", file=sys.stderr)
         inode.data = b"\x00" * inode.dsize
 
     if len(inode.data) != inode.dsize:
@@ -257,19 +247,20 @@ def scan_fs(content, endianness, *, verbose=False):  # noqa: C901
         offset = pos
         pos += pad(unknown_node.totlen)
 
-        if unknown_node.magic in [
-            JFFS2_MAGIC_BITMASK,
-            JFFS2_OLD_MAGIC_BITMASK,
-        ] and unknown_node.nodetype in NODETYPES:
+        if (
+            unknown_node.magic
+            in [
+                JFFS2_MAGIC_BITMASK,
+                JFFS2_OLD_MAGIC_BITMASK,
+            ]
+            and unknown_node.nodetype in NODETYPES
+        ):
             if unknown_node.nodetype == JFFS2_NODETYPE_DIRENT:
                 dirent = parse_dirent(
                     content[offset : offset + unknown_node.totlen], offset
                 )
                 if dirent.ino in fs[JFFS2_NODETYPE_DIRENT]:
-                    if (
-                        dirent.version
-                        > fs[JFFS2_NODETYPE_DIRENT][dirent.ino].version
-                    ):
+                    if dirent.version > fs[JFFS2_NODETYPE_DIRENT][dirent.ino].version:
                         fs[JFFS2_NODETYPE_DIRENT][dirent.ino] = dirent
                 else:
                     fs[JFFS2_NODETYPE_DIRENT][dirent.ino] = dirent
@@ -284,7 +275,13 @@ def scan_fs(content, endianness, *, verbose=False):  # noqa: C901
                     fs[JFFS2_NODETYPE_INODE][inode.ino] = [inode]
                 if verbose:
                     print(f"0x{offset:08X}:", inode)
-            elif unknown_node.nodetype in (JFFS2_NODETYPE_CLEANMARKER, JFFS2_NODETYPE_PADDING) or unknown_node.nodetype in (JFFS2_NODETYPE_SUMMARY, JFFS2_NODETYPE_XATTR) or unknown_node.nodetype == JFFS2_NODETYPE_XREF:
+            elif (
+                unknown_node.nodetype
+                in (JFFS2_NODETYPE_CLEANMARKER, JFFS2_NODETYPE_PADDING)
+                or unknown_node.nodetype
+                in (JFFS2_NODETYPE_SUMMARY, JFFS2_NODETYPE_XATTR)
+                or unknown_node.nodetype == JFFS2_NODETYPE_XREF
+            ):
                 pass
             else:
                 print("Unknown node type", unknown_node.nodetype, unknown_node)
