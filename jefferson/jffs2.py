@@ -369,7 +369,11 @@ def dump_fs(fs, target):  # noqa: C901
                     break
                 elif stat.S_ISCHR(inode.mode) or stat.S_ISBLK(inode.mode):
                     print("writing S_ISBLK", path)
-                    os.mknod(target_path, inode.mode, get_device(inode))
+                    device = get_device(inode)
+                    if device is None:
+                        print("Could not parse device")
+                        continue
+                    os.mknod(target_path, inode.mode, device)
                 elif stat.S_ISFIFO(inode.mode):
                     print("skipping S_ISFIFO", path)
                 elif stat.S_ISSOCK(inode.mode):
@@ -398,7 +402,7 @@ def extract_jffs2(file: Path, destination: Path, verbose: int) -> int:
 
         set_endianness(endianness)
 
-        fs = scan_fs(content, endianness, verbose=verbose)
+        fs = scan_fs(content, endianness, verbose=verbose > 0)
         print(f"dumping fs to {destination} (endianness: {endianness})")
         for key, value in fs.items():
             print(f"{NODETYPES[key].__name__} count: {len(value)}")
