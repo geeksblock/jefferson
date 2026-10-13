@@ -3,6 +3,7 @@
   "extends": ["config:recommended", "schedule:earlyMondays"],
   "forkProcessing": "enabled",
   "labels": ["dependencies"],
+  "minimumReleaseAge": "14 days",
   "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
