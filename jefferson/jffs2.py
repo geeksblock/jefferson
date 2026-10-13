@@ -16,7 +16,7 @@ import jefferson.compression.jffs2_lzma_nosize as jffs2_lzma_nosize
 import jefferson.compression.rtime as rtime
 
 
-def PAD(x):
+def pad(x):
     return ((x) + 3) & ~3
 
 
@@ -260,7 +260,7 @@ def scan_fs(content, endianness, verbose=False):
             pos += 1
             continue
         offset = pos
-        pos += PAD(unknown_node.totlen)
+        pos += pad(unknown_node.totlen)
 
         if unknown_node.magic in [
             JFFS2_MAGIC_BITMASK,
