@@ -381,7 +381,7 @@ def dump_fs(fs, target):
                     print(f"unhandled inode.mode: {inode.mode:o}", inode, dirent)
 
             except OSError as error:
-                print("OS error(%i): %s" % (error.errno, error.strerror), inode, dirent)
+                print(f"OS error({error.errno}): {error.strerror}", inode, dirent)
 
 
 def extract_jffs2(file: Path, destination: Path, verbose: int) -> int:
@@ -404,7 +404,7 @@ def extract_jffs2(file: Path, destination: Path, verbose: int) -> int:
         fs = scan_fs(content, endianness, verbose=verbose)
         print(f"dumping fs to {destination} (endianness: {endianness})")
         for key, value in fs.items():
-            print("%s count: %i" % (NODETYPES[key].__name__, len(value)))
+            print(f"{NODETYPES[key].__name__} count: {len(value)}")
 
         dump_fs(fs, destination)
     return 0
