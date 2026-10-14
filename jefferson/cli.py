@@ -37,6 +37,7 @@ from jefferson.jffs2 import extract_jffs2
     help="Verbosity level, counting, maximum level: 3 (use: -v, -vv, -vvv)",
 )
 def cli(
+    *,
     file: Path,
     dest: Path,
     force: bool,

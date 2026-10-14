@@ -1,3 +1,6 @@
+# pyright: reportUnusedExpression=false
+# ruff: noqa: B018
+
 # TODO: dead code parts must be removed in the future
 from jefferson.core import (
     JFFS2_COMPAT_MASK,
