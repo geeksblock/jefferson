@@ -370,10 +370,11 @@ def dump_fs(fs, target):
                         if not os.path.isdir(os.path.dirname(target_path)):
                             os.makedirs(os.path.dirname(target_path))
                         with open(target_path, "wb") as fd:
-                            for inode in dirent.inodes:
-                                fd.seek(inode.offset)
-                                fd.write(inode.data)
-                    os.chmod(target_path, stat.S_IMODE(inode.mode))
+                            for n in dirent.inodes:
+                                fd.seek(n.offset)
+                                fd.write(n.data)
+                        # use newest inode for mode
+                        os.chmod(target_path, stat.S_IMODE(dirent.inodes[-1].mode))
                     break
                 elif stat.S_ISCHR(inode.mode):
                     print("writing S_ISBLK", path)
